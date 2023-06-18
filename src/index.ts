@@ -49,7 +49,7 @@ app.get("/url/redirect/:link", async (req, res) => {
         from: lzw_encode(link),
       },
     });
-    if (!to) return res.status(404).redirect("https://poi.kr/errors/link");
+    if (!to) return res.status(302).redirect("https://poi.kr/errors/link");
     if (to.expireOnce)
       await prisma.link.delete({
         where: {
@@ -82,7 +82,7 @@ app.get("/custom/redirect/:link", async (req, res) => {
         from: lzw_encode(link),
       },
     });
-    if (!to) return res.status(404).redirect("https://poi.kr/errors/custom");
+    if (!to) return res.status(302).redirect("https://poi.kr/errors/custom");
     if (to.expireOnce)
       await prisma.customLink.delete({
         where: {
@@ -108,7 +108,7 @@ app.get("/text/data/:link", async (req, res) => {
         from: lzw_encode(link),
       },
     });
-    if (!to) return res.status(404).redirect("https://poi.kr/errors/text");
+    if (!to) return res.status(302).redirect("https://poi.kr/errors/text");
     console.log(to);
     if (to.expireOnce)
       await prisma.textLink.delete({
