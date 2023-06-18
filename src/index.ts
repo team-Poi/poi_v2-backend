@@ -27,7 +27,6 @@ const botHandler = (
   ogTitle: string,
   sendDataAsJSON?: boolean
 ) => {
-  console.log(req.get("user-agent"));
   if (isbot(req.get("user-agent"))) {
     if (sendDataAsJSON)
       res.send({
@@ -379,8 +378,6 @@ app.post("/text/new", async (req, res) => {
   let maxUsage = req.body.usage;
   let isEng = req.body.isEng;
   let expire = req.body.expire;
-
-  console.log(typeof text, typeof maxUsage, typeof isEng, typeof expire);
 
   if (
     typeof text != "string" ||
