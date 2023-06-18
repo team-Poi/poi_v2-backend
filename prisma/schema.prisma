@@ -24,5 +24,6 @@ model CustomLink {
 
 model TextLink {
   from String @id @unique
-  to String // pastebin.com/blabla 에서 blabla만 저장!
+  text String
+  expireOnce Boolean @default(true)
 }
