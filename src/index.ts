@@ -108,7 +108,7 @@ app.get("/text/data/:link", async (req, res) => {
         from: lzw_encode(link),
       },
     });
-    if (!to) return res.status(302).redirect("https://poi.kr/errors/text");
+    if (!to) return res.send({ s: false, r: "https://poi.kr/errors/text" });
     console.log(to);
     if (to.expireOnce)
       await prisma.textLink.delete({
