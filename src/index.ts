@@ -20,18 +20,29 @@ const randWordEng = (len: number) => {
 
 app.use(express.json());
 
-const botHandler = (req: any, res: any, link: string, ogTitle: string) => {
+const botHandler = (
+  req: any,
+  res: any,
+  link: string,
+  ogTitle: string,
+  sendDataAsJSON?: boolean
+) => {
   console.log(req.get("user-agent"));
   if (isbot(req.get("user-agent"))) {
-    res.send({
-      s: false,
-      e: "<meta>",
-      meta: {
-        url: `https://poi.kr${link}`,
-        title: ogTitle,
-        description: ogTitle,
-      },
-    });
+    if (sendDataAsJSON)
+      res.send({
+        s: false,
+        e: "<meta>",
+        meta: {
+          url: `https://poi.kr${link}`,
+          title: ogTitle,
+          description: ogTitle,
+        },
+      });
+    else
+      res.send(
+        `<!DOCTYPE html><html><head><meta property="og:type" content="website" /><meta property="og:url" content="https://poi.kr${link}" /><meta property="og:title" content="${ogTitle}" /><meta property="og:description" content="${ogTitle}" /><meta property="og:site_name" content="poi.kr (포이)" /><meta property="og:locale" content="en_US" /></head><body>No body for bots!</body></html>`
+      );
     return true;
   } else {
     return false;
@@ -101,7 +112,15 @@ app.get("/custom/redirect/:link", async (req, res) => {
 app.get("/text/data/:link", async (req, res) => {
   try {
     const link = req.params.link;
-    if (botHandler(req, res, `/t/${link}`, "Shared text by someone / " + link))
+    if (
+      botHandler(
+        req,
+        res,
+        `/t/${link}`,
+        "Shared text by someone / " + link,
+        true
+      )
+    )
       return;
     let to = await prisma.textLink.findFirst({
       where: {
