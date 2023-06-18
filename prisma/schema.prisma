@@ -13,11 +13,13 @@ datasource db {
 model Link {
   from String @id @unique
   to String
+  expireOnce Boolean @default(true)
 }
 
 model CustomLink {
   from String @id @unique
   to String
+  expireOnce Boolean @default(true)
 }
 
 model TextLink {

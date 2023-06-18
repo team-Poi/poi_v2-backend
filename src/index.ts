@@ -26,6 +26,12 @@ app.get("/url/redirect/:link", async (req, res) => {
       },
     });
     if (!to) return res.status(404).redirect("https://poi.kr/errors/link");
+    if (to.expireOnce)
+      prisma.link.delete({
+        where: {
+          from: lzw_encode(link),
+        },
+      });
     return res.status(301).redirect(lzw_decode(to.to));
   } catch (e) {
     return res.status(500).json({
@@ -44,6 +50,12 @@ app.get("/custom/redirect/:link", async (req, res) => {
       },
     });
     if (!to) return res.status(404).redirect("https://poi.kr/errors/custom");
+    if (to.expireOnce)
+      prisma.customLink.delete({
+        where: {
+          from: lzw_encode(link),
+        },
+      });
     return res.status(301).redirect(lzw_decode(to.to));
   } catch (e) {
     return res.status(500).json({
@@ -56,8 +68,13 @@ app.get("/custom/redirect/:link", async (req, res) => {
 app.post("/url/new", async (req, res) => {
   let isEng = req.body.eng;
   let to = req.body.to;
+  let expireOnce = req.body.expire;
 
-  if (typeof to == "undefined" || typeof isEng == "undefined")
+  if (
+    typeof to == "undefined" ||
+    typeof isEng == "undefined" ||
+    typeof expireOnce != "boolean"
+  )
     return res.send({
       s: false,
       e: "Invalid Query",
@@ -83,6 +100,7 @@ app.post("/url/new", async (req, res) => {
       data: {
         from: lzw_encode(id),
         to: lzw_encode(to),
+        expireOnce: expireOnce,
       },
     });
 
@@ -104,7 +122,8 @@ app.post("/custom/new", async (req, res) => {
   try {
     const to = req.body.to;
     const from = req.body.from;
-    if (!to || !from)
+    const expireOnce = req.body.expire;
+    if (!to || !from || typeof expireOnce != "boolean")
       return res.send({
         s: false,
         e: "Invalid Query",
@@ -123,6 +142,7 @@ app.post("/custom/new", async (req, res) => {
       data: {
         from: lzw_encode(from as string),
         to: lzw_encode(to as string),
+        expireOnce: expireOnce,
       },
     });
     return res.send({
