@@ -1,0 +1,26 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Link {
+  from String @id @unique
+  to String
+}
+
+model CustomLink {
+  from String @id @unique
+  to String
+}
+
+model TextLink {
+  from String @id @unique
+  to String // pastebin.com/blabla 에서 blabla만 저장!
+}
