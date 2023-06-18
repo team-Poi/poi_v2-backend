@@ -380,6 +380,8 @@ app.post("/text/new", async (req, res) => {
   let isEng = req.body.isEng;
   let expire = req.body.expire;
 
+  console.log(typeof text, typeof maxUsage, typeof isEng, typeof expire);
+
   if (
     typeof text != "string" ||
     typeof maxUsage != "number" ||
