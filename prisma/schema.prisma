@@ -13,17 +13,20 @@ datasource db {
 model Link {
   from String @id @unique
   to String
-  expireOnce Boolean @default(true)
+  maxUsage Int @default(1)
+  expireAfter DateTime
 }
 
 model CustomLink {
   from String @id @unique
   to String
-  expireOnce Boolean @default(true)
+  maxUsage Int @default(1)
+  expireAfter DateTime
 }
 
 model TextLink {
   from String @id @unique
   text String
-  expireOnce Boolean @default(true)
+  maxUsage Int @default(1)
+  expireAfter DateTime
 }

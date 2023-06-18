@@ -61,12 +61,35 @@ app.get("/url/redirect/:link", async (req, res) => {
       },
     });
     if (!to) return res.status(302).redirect("https://poi.kr/errors/link");
-    if (to.expireOnce)
+
+    if (to.expireAfter.getTime() < Date.now()) {
       await prisma.link.delete({
         where: {
           from: lzw_encode(link),
         },
       });
+      return res.status(302).redirect("https://poi.kr/errors/link");
+    }
+
+    if (to.maxUsage != -1) {
+      if (to.maxUsage <= 1)
+        await prisma.link.delete({
+          where: {
+            from: lzw_encode(link),
+          },
+        });
+      else
+        await prisma.link.update({
+          where: {
+            from: lzw_encode(link),
+          },
+          data: {
+            maxUsage: {
+              decrement: 1,
+            },
+          },
+        });
+    }
     return res.status(301).redirect(lzw_decode(to.to));
   } catch (e) {
     return res.status(500).json({
@@ -94,12 +117,35 @@ app.get("/custom/redirect/:link", async (req, res) => {
       },
     });
     if (!to) return res.status(302).redirect("https://poi.kr/errors/custom");
-    if (to.expireOnce)
+
+    if (to.expireAfter.getTime() < Date.now()) {
       await prisma.customLink.delete({
         where: {
           from: lzw_encode(link),
         },
       });
+      return res.status(302).redirect("https://poi.kr/errors/custom");
+    }
+
+    if (to.maxUsage != -1) {
+      if (to.maxUsage <= 1)
+        await prisma.customLink.delete({
+          where: {
+            from: lzw_encode(link),
+          },
+        });
+      else
+        await prisma.customLink.update({
+          where: {
+            from: lzw_encode(link),
+          },
+          data: {
+            maxUsage: {
+              decrement: 1,
+            },
+          },
+        });
+    }
     return res.status(301).redirect(lzw_decode(to.to));
   } catch (e) {
     return res.status(500).json({
@@ -127,14 +173,36 @@ app.get("/text/data/:link", async (req, res) => {
         from: lzw_encode(link),
       },
     });
-    console.log(link, to);
     if (!to) return res.send({ s: false, r: "https://poi.kr/errors/text" });
-    if (to.expireOnce)
+
+    if (to.expireAfter.getTime() < Date.now()) {
       await prisma.textLink.delete({
         where: {
           from: lzw_encode(link),
         },
       });
+      return res.send({ s: false, r: "https://poi.kr/errors/text" });
+    }
+
+    if (to.maxUsage != -1) {
+      if (to.maxUsage <= 1)
+        await prisma.textLink.delete({
+          where: {
+            from: lzw_encode(link),
+          },
+        });
+      else
+        await prisma.textLink.update({
+          where: {
+            from: lzw_encode(link),
+          },
+          data: {
+            maxUsage: {
+              decrement: 1,
+            },
+          },
+        });
+    }
     return res.send({
       s: true,
       e: lzw_decode(to.text),
@@ -161,12 +229,38 @@ app.get("/text/raw/:link", async (req, res) => {
         s: false,
         e: "Not found",
       });
-    if (to.expireOnce)
-      prisma.textLink.delete({
+
+    if (to.expireAfter.getTime() < Date.now()) {
+      await prisma.textLink.delete({
         where: {
           from: lzw_encode(link),
         },
       });
+      return res.status(404).send({
+        s: false,
+        e: "Not found",
+      });
+    }
+
+    if (to.maxUsage != -1) {
+      if (to.maxUsage <= 1) {
+        prisma.textLink.delete({
+          where: {
+            from: lzw_encode(link),
+          },
+        });
+      } else
+        await prisma.link.update({
+          where: {
+            from: lzw_encode(link),
+          },
+          data: {
+            maxUsage: {
+              decrement: 1,
+            },
+          },
+        });
+    }
     return res.send(lzw_decode(to.text));
   } catch (e) {
     return res.status(500).json({
@@ -179,12 +273,14 @@ app.get("/text/raw/:link", async (req, res) => {
 app.post("/url/new", async (req, res) => {
   let isEng = req.body.eng;
   let to = req.body.to;
-  let expireOnce = req.body.expire;
+  let usage = req.body.usage;
+  let expire = req.body.expire;
 
   if (
     typeof to == "undefined" ||
     typeof isEng == "undefined" ||
-    typeof expireOnce != "boolean"
+    typeof usage != "number" ||
+    typeof expire != "number"
   )
     return res.send({
       s: false,
@@ -211,7 +307,8 @@ app.post("/url/new", async (req, res) => {
       data: {
         from: lzw_encode(id),
         to: lzw_encode(to),
-        expireOnce: expireOnce,
+        maxUsage: usage,
+        expireAfter: new Date(Date.now() + expire * 1000),
       },
     });
 
@@ -233,8 +330,15 @@ app.post("/custom/new", async (req, res) => {
   try {
     const to = req.body.to;
     const from = req.body.from;
-    const expireOnce = req.body.expire;
-    if (!to || !from || typeof expireOnce != "boolean")
+    const maxUsage = req.body.usage;
+    const expire = req.body.expire;
+
+    if (
+      !to ||
+      !from ||
+      typeof maxUsage != "number" ||
+      typeof expire != "number"
+    )
       return res.send({
         s: false,
         e: "Invalid Query",
@@ -253,7 +357,8 @@ app.post("/custom/new", async (req, res) => {
       data: {
         from: lzw_encode(from as string),
         to: lzw_encode(to as string),
-        expireOnce: expireOnce,
+        maxUsage: maxUsage,
+        expireAfter: new Date(Date.now() + expire * 1000),
       },
     });
     return res.send({
@@ -271,13 +376,15 @@ app.post("/custom/new", async (req, res) => {
 
 app.post("/text/new", async (req, res) => {
   let text = req.body.text;
-  let useOnce = req.body.useOnce;
+  let maxUsage = req.body.usage;
   let isEng = req.body.isEng;
+  let expire = req.body.expire;
 
   if (
     typeof text != "string" ||
-    typeof useOnce != "boolean" ||
-    typeof isEng != "boolean"
+    typeof maxUsage != "number" ||
+    typeof isEng != "boolean" ||
+    typeof expire != "number"
   )
     return res.send({
       s: false,
@@ -304,7 +411,8 @@ app.post("/text/new", async (req, res) => {
       data: {
         from: lzw_encode(id),
         text: lzw_encode(text),
-        expireOnce: useOnce,
+        maxUsage: maxUsage,
+        expireAfter: new Date(Date.now() + expire * 1000),
       },
     });
 
