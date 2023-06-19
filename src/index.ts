@@ -8,7 +8,6 @@ import "dotenv/config";
 
 const app = express();
 
-// 1, 0, l, I, i는 안나옴.
 const randWordEng = (len: number) => {
   let usables =
     "qwertyuopasdfghjkzxcvbnm23456789QWERTYUOPASDFGHJKLZXCVBNM".split("");
@@ -204,7 +203,7 @@ app.get("/text/data/:link", async (req, res) => {
     }
     return res.send({
       s: true,
-      e: lzw_decode(to.text),
+      e: to.text,
     });
   } catch (e) {
     console.error(e);
@@ -260,7 +259,7 @@ app.get("/text/raw/:link", async (req, res) => {
           },
         });
     }
-    return res.send(lzw_decode(to.text));
+    return res.send(to.text);
   } catch (e) {
     return res.status(500).json({
       s: false,
@@ -299,6 +298,13 @@ app.post("/url/new", async (req, res) => {
         },
       });
       if (!thing) break;
+      if (thing.expireAfter < new Date())
+        await prisma.link.delete({
+          where: {
+            from: lzw_encode(id),
+          },
+        });
+
       id = getID();
     }
 
@@ -347,11 +353,19 @@ app.post("/custom/new", async (req, res) => {
         from: lzw_encode(from as string),
       },
     });
-    if (x)
-      return res.send({
-        s: false,
-        e: "Elready Exsists",
+
+    if (x) {
+      if (x.expireAfter > new Date())
+        return res.send({
+          s: false,
+          e: "Elready Exsists",
+        });
+      await prisma.customLink.delete({
+        where: {
+          from: lzw_encode(from as string),
+        },
       });
+    }
     await prisma.customLink.create({
       data: {
         from: lzw_encode(from as string),
@@ -403,13 +417,19 @@ app.post("/text/new", async (req, res) => {
         },
       });
       if (!thing) break;
+      if (thing.expireAfter < new Date())
+        await prisma.textLink.delete({
+          where: {
+            from: lzw_encode(id),
+          },
+        });
       id = getID();
     }
 
     await prisma.textLink.create({
       data: {
         from: lzw_encode(id),
-        text: lzw_encode(text),
+        text: text,
         maxUsage: maxUsage,
         expireAfter: new Date(Date.now() + expire * 1000),
       },
