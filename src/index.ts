@@ -2,7 +2,7 @@ import express from "express";
 import { lstatSync, readdirSync } from "fs";
 import { join as p_join } from "path";
 import { createServer as httpsServer } from "https";
-import { createServer, createServer as httpServer } from "http";
+import { createServer as httpServer } from "http";
 import { Server } from "socket.io";
 import { getClientIp } from "request-ip";
 import "dotenv/config";
@@ -70,12 +70,18 @@ let connectionCount = 0;
 async function main() {
   await loopPath("/");
 
-  const options = {
-    key: fs.readFileSync("/Users/oeinter/Documents/ssl/private.key"),
-    cert: fs.readFileSync("/Users/oeinter/Documents/ssl/certificate.crt"),
-  };
-
-  let server = createServer(app);
+  let server =
+    process.env.NODE_ENV == "production"
+      ? httpServer(app)
+      : httpsServer(
+          {
+            key: fs.readFileSync("/Users/oeinter/Documents/ssl/private.key"),
+            cert: fs.readFileSync(
+              "/Users/oeinter/Documents/ssl/certificate.crt"
+            ),
+          },
+          app
+        );
 
   let io = new Server(server, {
     cors: {
