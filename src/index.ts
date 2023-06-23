@@ -87,6 +87,8 @@ async function main() {
     },
   });
 
+  io.listen(server);
+
   io.on("connection", (socket) => {
     connectionCount++;
     const socketIP = getClientIp(socket.request);
