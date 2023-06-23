@@ -2,7 +2,7 @@ import express from "express";
 import { lstatSync, readdirSync } from "fs";
 import { join as p_join } from "path";
 import { createServer as httpsServer } from "https";
-import { createServer as httpServer } from "http";
+import { createServer, createServer as httpServer } from "http";
 import { Server } from "socket.io";
 import { getClientIp } from "request-ip";
 import "dotenv/config";
@@ -75,10 +75,7 @@ async function main() {
     cert: fs.readFileSync("/Users/oeinter/Documents/ssl/certificate.crt"),
   };
 
-  let server =
-    process.env.NODE_ENV == "production"
-      ? httpServer(app)
-      : httpsServer(options, app);
+  let server = createServer(app);
 
   let io = new Server(server, {
     cors: {
